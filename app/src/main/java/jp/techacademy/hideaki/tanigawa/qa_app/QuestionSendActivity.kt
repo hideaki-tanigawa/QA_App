@@ -24,7 +24,10 @@ import com.google.android.material.snackbar.Snackbar
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.DatabaseReference
-import com.google.firebase.database.FirebaseDatabase
+// ----- 変更:ここから
+// import com.google.firebase.database.FirebaseDatabase
+// ----- 変更:ここまで
+import com.google.firebase.firestore.FirebaseFirestore
 import jp.techacademy.hideaki.tanigawa.qa_app.databinding.ActivityQuestionSendBinding
 import java.io.ByteArrayOutputStream
 
@@ -39,9 +42,6 @@ class QuestionSendActivity : AppCompatActivity(), View.OnClickListener,
     private var genre: Int = 0
     private var pictureUri: Uri? = null
 
-    /**
-     * 渡ってきたジャンルの番号を保持。UIの準備。
-     */
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityQuestionSendBinding.inflate(layoutInflater)
@@ -59,14 +59,11 @@ class QuestionSendActivity : AppCompatActivity(), View.OnClickListener,
 
     /**
      * このActivityに戻ってきた時の処理
-     * 	Intent連携で取得した画像をリサイズしてImageViewに設定。
      */
     private var launcher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
-        // Activityに戻ることができたかを判別するコード
         val resultCode: Int = result.resultCode
-        // 選択した画像情報を取得
         val data: Intent? = result.data
 
         if (resultCode != Activity.RESULT_OK) {
@@ -83,10 +80,8 @@ class QuestionSendActivity : AppCompatActivity(), View.OnClickListener,
         // URIからBitmapを取得する
         val image: Bitmap
         try {
-            // Data Strageにアクセスするためのメソッドを作成
             val contentResolver = contentResolver
             val inputStream = contentResolver.openInputStream(uri!!)
-            // 保存されている画像の座標と色を取得
             image = BitmapFactory.decodeStream(inputStream)
             inputStream?.close()
         } catch (e: Exception) {
@@ -111,10 +106,6 @@ class QuestionSendActivity : AppCompatActivity(), View.OnClickListener,
         pictureUri = null
     }
 
-    /**
-     * ImageViewとButtonがタップされた時の処理。
-     * ImageViewをタップしたときは必要であれば許可を求めるダイアログを表示。
-     */
     override fun onClick(v: View) {
         if (v === binding.imageView) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -127,8 +118,6 @@ class QuestionSendActivity : AppCompatActivity(), View.OnClickListener,
                     showChooser()
                 } else {
                     // 許可されていないので許可ダイアログを表示する
-                    // ダイアログで何かイベントを起こすと、
-                    // onRequestPermissionsResultを自動で呼び出す
                     requestPermissions(
                         arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE),
                         PERMISSIONS_REQUEST_CODE
@@ -142,6 +131,8 @@ class QuestionSendActivity : AppCompatActivity(), View.OnClickListener,
             val im = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
             im.hideSoftInputFromWindow(v.getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS)
 
+            // ----- 変更: ここから
+            /*
             val dataBaseReference = FirebaseDatabase.getInstance().reference
             val genreRef = dataBaseReference.child(ContentsPATH).child(genre.toString())
 
@@ -149,6 +140,8 @@ class QuestionSendActivity : AppCompatActivity(), View.OnClickListener,
 
             // UID
             data["uid"] = FirebaseAuth.getInstance().currentUser!!.uid
+            */
+            // ----- 変更: ここまで
 
             // タイトルと本文を取得する
             val title = binding.titleText.text.toString()
@@ -170,15 +163,26 @@ class QuestionSendActivity : AppCompatActivity(), View.OnClickListener,
             val sp = PreferenceManager.getDefaultSharedPreferences(this)
             val name = sp.getString(NameKEY, "")
 
+            // ----- 変更: ここから
+            /*
             data["title"] = title
             data["body"] = body
             data["name"] = name!!
+             */
+            // FirestoreQuestionのインスタンスを作成し、値を詰めていく
+            val fireStoreQuestion = FireStoreQuestion()
+
+            fireStoreQuestion.uid = FirebaseAuth.getInstance().currentUser?.uid ?: ""
+            fireStoreQuestion.title = title
+            fireStoreQuestion.body = body
+            fireStoreQuestion.name = name!!
+            fireStoreQuestion.genre = genre
+            // ----- 変更: ここまで
 
             // 添付画像を取得する
             val drawable = binding.imageView.drawable as? BitmapDrawable
 
             // 添付画像が設定されていれば画像を取り出してBASE64エンコードする
-            // 画像データを文字列に変換する仕組み
             if (drawable != null) {
                 val bitmap = drawable.bitmap
                 val byteArrayOutputStream = ByteArrayOutputStream()
@@ -186,17 +190,37 @@ class QuestionSendActivity : AppCompatActivity(), View.OnClickListener,
                 val bitmapString =
                     Base64.encodeToString(byteArrayOutputStream.toByteArray(), Base64.DEFAULT)
 
-                data["image"] = bitmapString
+                // ----- 変更: ここから
+                // data["image"] = bitmapString
+                fireStoreQuestion.image = bitmapString
+                // ----- 変更: ここまで
             }
 
-            genreRef.push().setValue(data, this)
+            // ----- 変更: ここから
+            // genreRef.push().setValue(data, this)
+            FirebaseFirestore.getInstance()
+                .collection(ContentsPATH)
+                .document(fireStoreQuestion.id)
+                .set(fireStoreQuestion)
+                .addOnSuccessListener {
+                    binding.progressBar.visibility = View.GONE
+                    finish()
+                }
+                .addOnFailureListener {
+                    it.printStackTrace()
+                    binding.progressBar.visibility = View.GONE
+                    Snackbar.make(
+                        findViewById(android.R.id.content),
+                        getString(R.string.question_send_error_message),
+                        Snackbar.LENGTH_LONG
+                    ).show()
+                }
+            // ----- 変更: ここまで
+
             binding.progressBar.visibility = View.VISIBLE
         }
     }
 
-    /**
-     * 許可を求めるダイアログからの結果を受け取る。
-     */
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<String>,
@@ -214,10 +238,6 @@ class QuestionSendActivity : AppCompatActivity(), View.OnClickListener,
         }
     }
 
-    /**
-     * Intent連携の選択ダイアログを表示する。
-     * 準備を行っている
-     */
     private fun showChooser() {
         // ギャラリーから選択するIntent
         val galleryIntent = Intent(Intent.ACTION_GET_CONTENT)
@@ -244,9 +264,6 @@ class QuestionSendActivity : AppCompatActivity(), View.OnClickListener,
         launcher.launch(chooserIntent)
     }
 
-    /**
-     * Firebaseへの保存完了時に呼ばれる。
-     */
     override fun onComplete(databaseError: DatabaseError?, databaseReference: DatabaseReference) {
         binding.progressBar.visibility = View.GONE
 
