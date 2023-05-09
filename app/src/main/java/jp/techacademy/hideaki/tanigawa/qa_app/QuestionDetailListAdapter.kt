@@ -29,7 +29,7 @@ class QuestionDetailListAdapter(context: Context, private val question: Question
         return 1 + question.answers.size
     }
 
-    //引数で渡ってきたポジションがどのタイプかを返すようにします。
+    // 引数で渡ってきたポジションがどのタイプかを返すようにします。
     // 1行目、つまりポジションが0の時に質問であるTYPE_QUESTIONを返し、
     // それ以外は回答なのでTYPE_ANSWERを返すようにします。
     override fun getItemViewType(position: Int): Int {

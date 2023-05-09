@@ -63,6 +63,7 @@ class LoginActivity : AppCompatActivity() {
         loginListener = OnCompleteListener { task ->
             if (task.isSuccessful) {
                 // 成功した場合
+                // ログイン済みのユーザーを取得する
                 val user = auth.currentUser
                 val userRef = databaseReference.child(UsersPATH).child(user!!.uid)
 

@@ -3,9 +3,11 @@ package jp.techacademy.hideaki.tanigawa.qa_app
 import android.content.Intent
 import android.os.Bundle
 import android.util.Base64
+import android.view.LayoutInflater
 import androidx.appcompat.app.AppCompatActivity
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.core.view.GravityCompat
 import com.google.android.material.navigation.NavigationView
@@ -13,6 +15,7 @@ import com.google.android.material.snackbar.Snackbar
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
 import jp.techacademy.hideaki.tanigawa.qa_app.databinding.ActivityMainBinding
+import jp.techacademy.hideaki.tanigawa.qa_app.databinding.ListQuestionsBinding
 import jp.techacademy.taro.kirameki.qa_app.Answer
 
 class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
@@ -27,6 +30,11 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
     private var genreRef: DatabaseReference? = null
 
+    /**
+     * ChildEventListenerメソッドは、データに追加・変化があった時に受け取るメソッド。
+     * onChildAddedメソッドは、要素が追加されたとき、つまり質問が追加された時に呼ばれるメソッドです。
+     * onChildChangedメソッドは要素に変化があった時です。今回は質問に対して回答が投稿された時に呼ばれる。
+     */
     private val eventListener = object : ChildEventListener {
         override fun onChildAdded(dataSnapshot: DataSnapshot, s: String?) {
             val map = dataSnapshot.value as Map<*, *>
@@ -80,6 +88,10 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             for (question in questionArrayList) {
                 if (dataSnapshot.key.equals(question.questionUid)) {
                     // このアプリで変更がある可能性があるのは回答（Answer)のみ
+                    /**
+                     * 変化があった質問に対応するQuestionクラスのインスタンスで保持している回答のArrayListを、
+                     * いったんクリアし、取得した回答を設定します。
+                     */
                     question.answers.clear()
                     val answerMap = map["answers"] as Map<*, *>?
                     if (answerMap != null) {
@@ -111,7 +123,6 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         setContentView(binding.root)
 
         setSupportActionBar(binding.content.toolbar)
-
         binding.content.fab.setOnClickListener {
             // ジャンルを選択していない場合はメッセージを表示するだけ
             if (genre == 0) {
@@ -170,6 +181,10 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         if(genre == 0) {
             onNavigationItemSelected(navigationView.menu.getItem(0))
         }
+
+        favoriteDisplayHidden(navigationView)
+
+        adapter.notifyDataSetChanged()
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -227,5 +242,19 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         // ----- 追加:ここまで -----
 
         return true
+    }
+
+    /**
+     * @param view menuのNavigationViewを引数に取る
+     */
+    private fun favoriteDisplayHidden(view: NavigationView){
+        // ログイン済みのユーザーを取得する
+        val user = FirebaseAuth.getInstance().currentUser
+
+        if (user == null) {
+            view.menu.getItem(4).setVisible(false);
+        }else{
+            view.menu.getItem(4).setVisible(true);
+        }
     }
 }

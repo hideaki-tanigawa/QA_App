@@ -37,6 +37,11 @@ class AnswerSendActivity : AppCompatActivity(), View.OnClickListener,
         binding.sendButton.setOnClickListener(this)
     }
 
+    /**
+     * Firebaseへの書き込み完了を受け取るonCompleteメソッドでは成功したら、
+     * finishメソッドを呼び出してActivityを閉じ、
+     * 失敗した場合はSnackbarでその旨を表示させます。
+     */
     override fun onComplete(databaseError: DatabaseError?, databaseReference: DatabaseReference) {
         binding.progressBar.visibility = View.GONE
 

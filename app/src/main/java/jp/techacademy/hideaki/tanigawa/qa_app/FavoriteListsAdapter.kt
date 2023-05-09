@@ -3,16 +3,15 @@ package jp.techacademy.hideaki.tanigawa.qa_app
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.BaseAdapter
-import com.google.firebase.auth.FirebaseAuth
 import jp.techacademy.hideaki.tanigawa.qa_app.databinding.ListQuestionsBinding
 
-class QuestionsListAdapter(context: Context) : BaseAdapter() {
+class FavoriteListsAdapter(context: Context) : BaseAdapter() {
     private var layoutInflater: LayoutInflater
+    private var favoriteArrayList = ArrayList<Favorite>()
     private var questionArrayList = ArrayList<Question>()
 
     init {
@@ -20,18 +19,24 @@ class QuestionsListAdapter(context: Context) : BaseAdapter() {
     }
 
     override fun getCount(): Int {
-        return questionArrayList.size
+        return favoriteArrayList.size
     }
 
+    /**
+     * @param position
+     */
     override fun getItem(position: Int): Any {
-        return questionArrayList[position]
+        return favoriteArrayList[position]
     }
 
+    /**
+     * @param position
+     */
     override fun getItemId(position: Int): Long {
         return position.toLong()
     }
 
-    override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
+    override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View {
         // ViewBindingを使うための設定
         val binding = if (convertView == null) {
             ListQuestionsBinding.inflate(layoutInflater, parent, false)
@@ -51,27 +56,6 @@ class QuestionsListAdapter(context: Context) : BaseAdapter() {
             binding.imageView.setImageBitmap(image)
         }
 
-        // 星の処理
-        binding.imageView2.apply {
-            // ログイン済みのユーザーを取得する
-            val user = FirebaseAuth.getInstance().currentUser
-
-            if (user == null) {
-                visibility = View.GONE
-            } else {
-                visibility = View.VISIBLE
-            }
-
-            setOnClickListener{
-                Log.d("これって通るの？","通ってくれ（願望）")
-            }
-        }
-
         return view
-    }
-
-    // リスト更新
-    fun setQuestionArrayList(questionArrayList: ArrayList<Question>) {
-        this.questionArrayList = questionArrayList
     }
 }
