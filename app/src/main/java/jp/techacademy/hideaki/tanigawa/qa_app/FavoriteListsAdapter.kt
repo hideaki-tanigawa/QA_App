@@ -7,12 +7,11 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.BaseAdapter
-import jp.techacademy.hideaki.tanigawa.qa_app.databinding.ListQuestionsBinding
+import jp.techacademy.hideaki.tanigawa.qa_app.databinding.ListFavoriteBinding
 
 class FavoriteListsAdapter(context: Context) : BaseAdapter() {
     private var layoutInflater: LayoutInflater
-    private var favoriteArrayList = ArrayList<Favorite>()
-    private var questionArrayList = ArrayList<Question>()
+    private var favoriteArrayList = ArrayList<Question>()
 
     init {
         layoutInflater = context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
@@ -22,34 +21,28 @@ class FavoriteListsAdapter(context: Context) : BaseAdapter() {
         return favoriteArrayList.size
     }
 
-    /**
-     * @param position
-     */
     override fun getItem(position: Int): Any {
         return favoriteArrayList[position]
     }
 
-    /**
-     * @param position
-     */
     override fun getItemId(position: Int): Long {
         return position.toLong()
     }
 
-    override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View {
+    override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
         // ViewBindingを使うための設定
         val binding = if (convertView == null) {
-            ListQuestionsBinding.inflate(layoutInflater, parent, false)
+            ListFavoriteBinding.inflate(layoutInflater, parent, false)
         } else {
-            ListQuestionsBinding.bind(convertView)
+            ListFavoriteBinding.bind(convertView)
         }
         val view: View = convertView ?: binding.root
 
-        binding.titleTextView.text = questionArrayList[position].title
-        binding.nameTextView.text = questionArrayList[position].name
-        binding.resTextView.text = questionArrayList[position].answers.size.toString()
+        binding.titleTextView.text = favoriteArrayList[position].title
+        binding.nameTextView.text = favoriteArrayList[position].name
+        binding.resTextView.text = favoriteArrayList[position].answers.size.toString()
 
-        val bytes = questionArrayList[position].imageBytes
+        val bytes = favoriteArrayList[position].imageBytes
         if (bytes.isNotEmpty()) {
             val image = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
                 .copy(Bitmap.Config.ARGB_8888, true)
@@ -58,4 +51,10 @@ class FavoriteListsAdapter(context: Context) : BaseAdapter() {
 
         return view
     }
+
+    // リスト更新
+    fun setQuestionArrayList(questionArrayList: ArrayList<Question>) {
+        this.favoriteArrayList = questionArrayList
+    }
+
 }

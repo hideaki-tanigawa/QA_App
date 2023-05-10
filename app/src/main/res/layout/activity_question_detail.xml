@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:padding="16dp"
     tools:context=".QuestionDetailActivity">
 
@@ -21,6 +22,18 @@
         android:layout_alignParentBottom="true"
         android:layout_margin="16dp"
         android:src="@drawable/plus"
+        tools:ignore="ContentDescription,SpeakableTextPresentCheck,ImageContrastCheck" />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/favo"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentBottom="true"
+        android:layout_margin="16dp"
+        android:src="@drawable/ic_star"
+        app:tint="@color/orange_700"
+        app:backgroundTint="@color/orange_200"
         tools:ignore="ContentDescription,SpeakableTextPresentCheck,ImageContrastCheck" />
 
 </RelativeLayout>

@@ -15,7 +15,6 @@ import com.google.android.material.snackbar.Snackbar
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
 import jp.techacademy.hideaki.tanigawa.qa_app.databinding.ActivityMainBinding
-import jp.techacademy.hideaki.tanigawa.qa_app.databinding.ListQuestionsBinding
 import jp.techacademy.taro.kirameki.qa_app.Answer
 
 class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
@@ -27,6 +26,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     private lateinit var databaseReference: DatabaseReference
     private lateinit var questionArrayList: ArrayList<Question>
     private lateinit var adapter: QuestionsListAdapter
+    private var uid = ""
 
     private var genreRef: DatabaseReference? = null
 
@@ -183,8 +183,6 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         }
 
         favoriteDisplayHidden(navigationView)
-
-        adapter.notifyDataSetChanged()
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -223,6 +221,18 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                 binding.content.toolbar.title = getString(R.string.menu_computer_label)
                 genre = 4
             }
+            R.id.nav_favorite -> {
+                binding.content.toolbar.title = getString(R.string.menu_favorite_list_label)
+                genre = 5
+            }
+        }
+
+        if(genre == 5){
+            genre = 1
+            binding.content.toolbar.title = getString(R.string.menu_hobby_label)
+            val intent = Intent(applicationContext, FavoriteListsActivity::class.java)
+            intent.putExtra("uid", uid)
+            startActivity(intent)
         }
 
         binding.drawerLayout.closeDrawer(GravityCompat.START)
@@ -255,6 +265,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             view.menu.getItem(4).setVisible(false);
         }else{
             view.menu.getItem(4).setVisible(true);
+            uid = FirebaseAuth.getInstance().currentUser!!.uid
         }
     }
 }

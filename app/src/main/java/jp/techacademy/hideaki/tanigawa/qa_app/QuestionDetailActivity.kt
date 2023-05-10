@@ -4,6 +4,8 @@ import android.content.Intent
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
+import android.view.View
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
 import jp.techacademy.hideaki.tanigawa.qa_app.databinding.ActivityQuestionDetailBinding
@@ -15,6 +17,8 @@ class QuestionDetailActivity : AppCompatActivity() {
     private lateinit var question: Question
     private lateinit var adapter: QuestionDetailListAdapter
     private lateinit var answerRef: DatabaseReference
+    private lateinit var favoRef: DatabaseReference
+    private var userId:String = ""
 
     private val eventListener = object : ChildEventListener {
         override fun onChildAdded(dataSnapshot: DataSnapshot, s: String?) {
@@ -82,9 +86,73 @@ class QuestionDetailActivity : AppCompatActivity() {
             }
         }
 
+        // ログイン済みのユーザーを取得する
+        val user = FirebaseAuth.getInstance().currentUser
+        if(user != null){
+            userId = FirebaseAuth.getInstance().currentUser!!.uid
+        }
+
+        // 星の処理
+        binding.favo.apply {
+            if (user == null) {
+                visibility = View.GONE
+            } else {
+                visibility = View.VISIBLE
+                val dataBaseReference = FirebaseDatabase.getInstance().reference
+                val favoRef = dataBaseReference.child(FavoritePATH).child(userId).child(question.questionUid)
+
+                // お気に入りボタンが押された場合
+                setOnClickListener {
+                    Log.d("これって通るの？", "通ってくれ（願望）")
+                    favoRef.addListenerForSingleValueEvent(object : ValueEventListener {
+                        override fun onDataChange(snapshot: DataSnapshot) {
+                            val data = snapshot.value as Map<*, *>?
+                            if (data == null) {
+                                val data = HashMap<String, String>()
+                                data["genre"] = question.genre.toString()
+                                favoRef.setValue(data)
+                                // 星の色を色塗りにする
+                                binding.favo.setImageResource(R.drawable.ic_star)
+                            } else {
+                                favoRef.removeValue()
+                                // 星の色をボーダーにする
+                                binding.favo.setImageResource(R.drawable.ic_star_border)
+                            }
+                        }
+
+                        override fun onCancelled(firebaseError: DatabaseError) {}
+                    })
+
+                }
+            }
+        }
+
         val dataBaseReference = FirebaseDatabase.getInstance().reference
+        favoriteButtonCheck(dataBaseReference)
+
         answerRef = dataBaseReference.child(ContentsPATH).child(question.genre.toString())
             .child(question.questionUid).child(AnswersPATH)
         answerRef.addChildEventListener(eventListener)
+    }
+
+    /**
+     * お気に入りされているかどうかで星の色を変更する
+     * @param databaseReference Firebaseを操作する仕様書
+     */
+    private fun favoriteButtonCheck(databaseReference: DatabaseReference) {
+        favoRef = databaseReference.child(FavoritePATH).child(userId).child(question.questionUid)
+
+        favoRef.addListenerForSingleValueEvent(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val data = snapshot.value as Map<*, *>?
+                if (data == null) {
+                    binding.favo.setImageResource(R.drawable.ic_star_border)
+                } else {
+                    binding.favo.setImageResource(R.drawable.ic_star)
+                }
+            }
+
+            override fun onCancelled(firebaseError: DatabaseError) {}
+        })
     }
 }

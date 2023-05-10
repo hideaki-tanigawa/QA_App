@@ -9,6 +9,10 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.BaseAdapter
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
 import jp.techacademy.hideaki.tanigawa.qa_app.databinding.ListQuestionsBinding
 
 class QuestionsListAdapter(context: Context) : BaseAdapter() {
@@ -49,22 +53,6 @@ class QuestionsListAdapter(context: Context) : BaseAdapter() {
             val image = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
                 .copy(Bitmap.Config.ARGB_8888, true)
             binding.imageView.setImageBitmap(image)
-        }
-
-        // 星の処理
-        binding.imageView2.apply {
-            // ログイン済みのユーザーを取得する
-            val user = FirebaseAuth.getInstance().currentUser
-
-            if (user == null) {
-                visibility = View.GONE
-            } else {
-                visibility = View.VISIBLE
-            }
-
-            setOnClickListener{
-                Log.d("これって通るの？","通ってくれ（願望）")
-            }
         }
 
         return view
